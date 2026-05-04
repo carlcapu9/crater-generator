@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRATER GENERATOR // GPU-ACCELERATED PROCEDURAL CRATERS FOR BLENDER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* =========================================================
+     CRATER GENERATOR — compact marketing site
+     ========================================================= */
+  :root {
+    --void:        #050508;
+    --void-2:      #0a0a10;
+    --panel:       #0d0e15;
+    --panel-2:     #14151e;
+    --rule:        #1e1f2a;
+    --rule-bright: #2a2c3c;
+    --ink:         #e8e8ec;
+    --ink-mid:     #a4a6b3;
+    --ink-dim:     #6b6d78;
+    --plasma:      #ff5e1f;
+    --plasma-2:    #ffaa3d;
+    --cyan:        #00d4ff;
+    --grid:        rgba(255, 94, 31, 0.06);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: 'Manrope', -apple-system, sans-serif;
+    font-weight: 400;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--plasma); color: var(--void); }
+
+  #stars {
+    position: fixed; inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    background-image:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 99;
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(255,255,255,0.018) 0,
+        rgba(255,255,255,0.018) 1px,
+        transparent 1px,
+        transparent 3px);
+  }
+
+  /* ---- glitch RGB split on hover (applied to all text elements) ---- */
+  .hero-title,
+  .h2,
+  .keymsg-title,
+  .eq-name,
+  .eq-formula,
+  .gal-caption,
+  .vid-caption,
+  .cta-h,
+  .cta-pretitle,
+  .label-tag,
+  .brand,
+  .footer-text {
+    transition: text-shadow 0.05s ease, transform 0.05s ease;
+  }
+  .hero-title:hover,
+  .h2:hover,
+  .keymsg-title:hover,
+  .eq-name:hover,
+  .eq-formula:hover,
+  .gal-caption:hover,
+  .vid-caption:hover,
+  .cta-h:hover,
+  .cta-pretitle:hover,
+  .label-tag:hover,
+  .brand:hover,
+  .footer-text:hover {
+    animation: glitch-rgb 0.45s steps(2, end);
+  }
+  @keyframes glitch-rgb {
+    0% {
+      text-shadow:
+        0 0 0 transparent,
+        0 0 0 transparent;
+      transform: translate(0, 0);
+    }
+    15% {
+      text-shadow:
+        -2px 0 0 rgba(0, 212, 255, 0.85),
+        2px 0 0 rgba(255, 94, 31, 0.85);
+      transform: translate(1px, 0);
+    }
+    30% {
+      text-shadow:
+        2px 0 0 rgba(0, 212, 255, 0.85),
+        -2px 0 0 rgba(255, 94, 31, 0.85);
+      transform: translate(-1px, 1px);
+    }
+    45% {
+      text-shadow:
+        -3px 0 0 rgba(0, 212, 255, 0.7),
+        3px 0 0 rgba(255, 94, 31, 0.7),
+        0 0 8px rgba(255, 94, 31, 0.3);
+      transform: translate(2px, -1px);
+    }
+    60% {
+      text-shadow:
+        2px 0 0 rgba(0, 212, 255, 0.6),
+        -2px 0 0 rgba(255, 94, 31, 0.6);
+      transform: translate(-1px, 0);
+    }
+    75% {
+      text-shadow:
+        -1px 0 0 rgba(0, 212, 255, 0.4),
+        1px 0 0 rgba(255, 94, 31, 0.4);
+      transform: translate(0, 0);
+    }
+    100% {
+      text-shadow:
+        0 0 0 transparent,
+        0 0 0 transparent;
+      transform: translate(0, 0);
+    }
+  }
+
+  /* ---- cursor spotlight ---- */
+  #spotlight {
+    position: fixed;
+    top: 0; left: 0;
+    width: 600px;
+    height: 600px;
+    pointer-events: none;
+    z-index: 1;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle at center,
+      rgba(255, 94, 31, 0.10) 0%,
+      rgba(255, 94, 31, 0.05) 25%,
+      rgba(255, 94, 31, 0.02) 50%,
+      transparent 70%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    will-change: transform;
+  }
+  #spotlight.active { opacity: 1; }
+  @media (hover: none) { #spotlight { display: none; } }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 2; }
+  .label-tag {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--plasma);
+    margin-bottom: 16px;
+  }
+  .label-tag::before { content: ''; width: 24px; height: 1px; background: var(--plasma); }
+  .h2 {
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 600;
+    font-size: clamp(32px, 4.5vw, 56px);
+    line-height: 1;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    max-width: 760px;
+  }
+  .h2 .accent { color: var(--plasma); }
+
+  /* HUD corners */
+  .hud { position: relative; }
+  .hud::before, .hud::after,
+  .hud > .hud-bl, .hud > .hud-br {
+    content: ''; position: absolute;
+    width: 14px; height: 14px;
+    border: 1px solid var(--plasma);
+    pointer-events: none;
+  }
+  .hud::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+  .hud::after  { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+  .hud > .hud-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+  .hud > .hud-br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+  /* ========================== NAV ========================== */
+  .nav-bar {
+    padding: 24px 0;
+    border-bottom: 1px solid var(--rule);
+    background: rgba(5, 5, 8, 0.7);
+    backdrop-filter: blur(8px);
+    position: relative;
+    z-index: 50;
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    border: 1px solid var(--plasma);
+    display: grid; place-items: center;
+    position: relative;
+  }
+  .brand-mark::after {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--plasma);
+    box-shadow: 0 0 16px var(--plasma);
+  }
+  .brand-version {
+    font-family: 'Space Mono', monospace;
+    color: var(--plasma);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+  }
+
+  /* ========================== HERO ========================== */
+  .hero {
+    position: relative;
+    padding: 80px 0 96px;
+    border-bottom: 1px solid var(--rule);
+    overflow: hidden;
+    min-height: 78vh;
+    display: flex;
+    align-items: center;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 80% 20%, rgba(255, 94, 31, 0.18) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 80%, rgba(0, 212, 255, 0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    pointer-events: none;
+  }
+  .hero-inner { width: 100%; position: relative; z-index: 3; }
+  .hero-status {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 32px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-mid);
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    background: var(--plasma);
+    border-radius: 50%;
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 94, 31, 0.6); }
+    50% { opacity: 0.4; box-shadow: 0 0 0 10px rgba(255, 94, 31, 0); }
+  }
+  .hero-title {
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 700;
+    font-size: clamp(56px, 10vw, 156px);
+    line-height: 0.88;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .hero-title .ti-row { display: block; overflow: hidden; }
+  .hero-title .ti-inner {
+    display: block;
+    transform: translateY(110%);
+    animation: rise-up 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  }
+  .hero-title .ti-row:nth-child(1) .ti-inner { animation-delay: 0.1s; }
+  .hero-title .ti-row:nth-child(2) .ti-inner { animation-delay: 0.25s; }
+  .hero-title .accent { color: var(--plasma); }
+  @keyframes rise-up { to { transform: translateY(0); } }
+
+  .hero-line {
+    height: 1px;
+    background: linear-gradient(90deg, var(--plasma) 0%, transparent 100%);
+    width: 0;
+    animation: line-grow 1.2s 0.5s ease-out forwards;
+    margin-bottom: 32px;
+  }
+  @keyframes line-grow { to { width: 100%; } }
+
+  .hero-meta {
+    max-width: 720px;
+    opacity: 0;
+    animation: fade-up 0.8s 0.7s ease-out forwards;
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-tagline {
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--ink-mid);
+  }
+  .hero-tagline strong { color: var(--ink); font-weight: 600; }
+
+  /* ========================== KEY MESSAGE ========================== */
+  .keymsg {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .keymsg-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .keymsg-cell {
+    background: var(--panel);
+    padding: 40px 28px;
+    position: relative;
+  }
+  .keymsg-cell:hover { background: var(--panel-2); }
+  .keymsg-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--plasma);
+    margin-bottom: 18px;
+  }
+  .keymsg-title {
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.05;
+    letter-spacing: -0.005em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .keymsg-desc {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink-mid);
+  }
+  .keymsg-icon {
+    position: absolute;
+    top: 32px; right: 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-dim);
+  }
+  @media (max-width: 1100px) {
+    .keymsg-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .keymsg-grid { grid-template-columns: 1fr; }
+    .keymsg-cell { padding: 32px 24px; }
+  }
+
+  /* ========================== GALLERY (4 images) ========================== */
+  .gallery {
+    padding: 96px 0;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .gallery-head { margin-bottom: 56px; }
+  .gal-grid-4 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .gal-card {
+    aspect-ratio: 21 / 9;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .gal-card:hover { border-color: var(--plasma); }
+  .gal-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  .gal-card:hover .gal-img { transform: scale(1.04); }
+  .gal-card .ph {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    background:
+      radial-gradient(circle at 40% 60%, rgba(255, 94, 31, 0.12) 0%, transparent 60%),
+      repeating-linear-gradient(45deg,
+        var(--panel) 0,
+        var(--panel) 14px,
+        var(--panel-2) 14px,
+        var(--panel-2) 28px);
+  }
+  .gal-card .ph-text {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .gal-card .ph-text strong {
+    display: block;
+    color: var(--plasma);
+    font-size: 14px;
+    margin-bottom: 6px;
+    font-family: 'Chakra Petch', sans-serif;
+    letter-spacing: 0.1em;
+  }
+  .gal-card .corner-id {
+    position: absolute;
+    top: 14px; left: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--plasma);
+  }
+  .gal-card .gal-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 16px 20px;
+    background: linear-gradient(180deg, transparent 0%, rgba(5, 5, 8, 0.92) 100%);
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .gal-card .gal-caption .sub {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-dim);
+    margin-top: 4px;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+  @media (max-width: 760px) {
+    .gal-card { aspect-ratio: 16 / 10; }
+  }
+
+  /* ========================== VIDEOS (2 stacked) ========================== */
+  .videos {
+    padding: 96px 0;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .videos-head { margin-bottom: 56px; }
+  .video-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .video-card {
+    aspect-ratio: 16 / 9;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    position: relative;
+    overflow: hidden;
+  }
+  .vid-media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .video-card .ph {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    background:
+      radial-gradient(circle at 50% 60%, rgba(255, 94, 31, 0.15) 0%, transparent 60%),
+      var(--panel);
+  }
+  .video-card .ph-text {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .video-card .ph-text strong {
+    display: block;
+    color: var(--plasma);
+    font-size: 15px;
+    margin-bottom: 8px;
+    font-family: 'Chakra Petch', sans-serif;
+    letter-spacing: 0.15em;
+  }
+  .video-card .play-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px; height: 70px;
+    border: 1px solid var(--plasma);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: rgba(255, 94, 31, 0.08);
+    pointer-events: none;
+  }
+  .video-card .play-icon::after {
+    content: '';
+    border-style: solid;
+    border-width: 12px 0 12px 18px;
+    border-color: transparent transparent transparent var(--plasma);
+    margin-left: 4px;
+  }
+  .video-card .corner-tag {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--plasma);
+    background: rgba(255, 94, 31, 0.12);
+    border: 1px solid var(--plasma);
+    padding: 4px 10px;
+  }
+  .video-card .vid-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 18px 22px;
+    background: linear-gradient(180deg, transparent 0%, rgba(5, 5, 8, 0.95) 100%);
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .video-card .vid-caption .sub {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--ink-dim);
+    margin-top: 4px;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+  @media (max-width: 760px) {
+    .video-card { aspect-ratio: 16 / 9; }
+  }
+
+  /* ========================== EQUATIONS ========================== */
+  .equations {
+    padding: 96px 0;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .eq-head { margin-bottom: 56px; }
+  .eq-intro {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink-mid);
+    max-width: 640px;
+    margin-top: 24px;
+  }
+  .eq-intro strong { color: var(--ink); font-weight: 600; }
+  .eq-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .eq-card {
+    background: var(--panel);
+    padding: 36px 32px;
+    position: relative;
+    transition: background 0.3s;
+  }
+  .eq-card:hover { background: var(--panel-2); }
+  .eq-id {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--plasma);
+    margin-bottom: 12px;
+  }
+  .eq-name {
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 600;
+    font-size: 19px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 22px;
+    color: var(--ink);
+  }
+  .eq-formula {
+    font-family: 'Space Mono', monospace;
+    font-size: 17px;
+    color: var(--plasma);
+    background: var(--void);
+    border: 1px solid var(--rule-bright);
+    padding: 18px 22px;
+    margin-bottom: 18px;
+    overflow-x: auto;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+  }
+  .eq-desc {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-mid);
+  }
+  .eq-cite {
+    display: block;
+    margin-top: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+    letter-spacing: 0.1em;
+  }
+  @media (max-width: 760px) {
+    .eq-formula { font-size: 14px; }
+  }
+
+  /* ========================== CTA ========================== */
+  .cta-final {
+    padding: 120px 0;
+    text-align: center;
+    position: relative;
+    border-bottom: 1px solid var(--rule);
+    overflow: hidden;
+  }
+  .cta-final::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 94, 31, 0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .cta-pretitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--plasma);
+    margin-bottom: 28px;
+  }
+  .cta-h {
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 700;
+    font-size: clamp(48px, 7vw, 96px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -0.025em;
+    margin-bottom: 32px;
+  }
+  .cta-h .accent { color: var(--plasma); }
+  .cta-sub {
+    font-size: 17px;
+    color: var(--ink-mid);
+    max-width: 580px;
+    margin: 0 auto 48px;
+    line-height: 1.6;
+  }
+
+  /* ========================== FOOTER ========================== */
+  .footer {
+    padding: 40px 0;
+    text-align: center;
+  }
+  .footer-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .footer-text .accent { color: var(--plasma); }
+
+  /* ========================== SCROLL REVEAL ========================== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.2, 0.9, 0.3, 1),
+                transform 0.8s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  .reveal.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+<div id="spotlight"></div>
+
+<!-- ========================== NAV ========================== -->
+<nav class="nav-bar">
+  <div class="wrap nav-inner">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span>CRATER&nbsp;GENERATOR</span>
+      <span class="brand-version">v1.0.0</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ========================== HERO ========================== -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="wrap hero-inner">
+    <div class="hero-status">
+      <span class="status-dot"></span>
+      <span>REAL-TIME &nbsp;·&nbsp; PHYSICS-BASED &nbsp;·&nbsp; PROCEDURAL CRATER GENERATION</span>
+    </div>
+
+    <h1 class="hero-title">
+      <span class="ti-row"><span class="ti-inner">Crater</span></span>
+      <span class="ti-row"><span class="ti-inner"><span class="accent">Generator.</span></span></span>
+    </h1>
+
+    <div class="hero-line"></div>
+
+    <div class="hero-meta">
+      <p class="hero-tagline">
+        <strong>GPU-accelerated procedural craters for Blender.</strong> Physically realistic for both <strong>kinetic impact</strong> and <strong>explosion</strong> craters. Real hydraulic erosion. Every crater unique — driven by Schmidt-Holsapple scaling, McGetchin ejecta and Beyer particle hydraulics, all computed on the GPU.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ========================== KEY MESSAGE ========================== -->
+<section class="keymsg">
+  <div class="wrap">
+    <div class="keymsg-grid">
+      <div class="keymsg-cell reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <div class="keymsg-num">// 01</div>
+        <div class="keymsg-icon">GPU</div>
+        <h3 class="keymsg-title">Runs entirely on the GPU.</h3>
+        <p class="keymsg-desc">Every crater, every erosion pass, every droplet trajectory is computed in compute shaders. Tens of thousands of particles per second. No CPU bottleneck.</p>
+      </div>
+      <div class="keymsg-cell reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <div class="keymsg-num">// 02</div>
+        <div class="keymsg-icon">DUAL</div>
+        <h3 class="keymsg-title">Impact &amp; explosion.</h3>
+        <p class="keymsg-desc">Schmidt-Holsapple Pi-group scaling is calibrated against both laboratory hypervelocity impacts <em>and</em> nuclear test data. Generate kinetic strikes <em>or</em> ground-level detonations from the same solver.</p>
+      </div>
+      <div class="keymsg-cell reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <div class="keymsg-num">// 03</div>
+        <div class="keymsg-icon">CURSOR</div>
+        <h3 class="keymsg-title">3D cursor placement.</h3>
+        <p class="keymsg-desc">Subdivide a plane, position the 3D cursor where you want the impact, click. The crater forms exactly under the cursor — no gizmos, no drag-and-drop guessing.</p>
+      </div>
+      <div class="keymsg-cell reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <div class="keymsg-num">// 04</div>
+        <div class="keymsg-icon">PROC</div>
+        <h3 class="keymsg-title">Every crater unique.</h3>
+        <p class="keymsg-desc">No presets. No templates. Each crater is procedurally generated — change the seed and the rim profile, ejecta pattern and erosion network all shift accordingly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================== GALLERY (4 images) ========================== -->
+<section class="gallery" id="gallery">
+  <div class="wrap">
+    <div class="gallery-head reveal">
+      <span class="label-tag">SECTION 01 // VISUAL OUTPUT</span>
+      <h2 class="h2">Four states. <span class="accent">Same solver.</span></h2>
+    </div>
+
+    <div class="gal-grid-4">
+
+      <div class="gal-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <img class="gal-img" src="single_crater.png" alt="Single crater render">
+        <span class="corner-id">// I.001</span>
+        <div class="gal-caption">
+          Single Crater
+          <span class="sub">// Schmidt-Holsapple · McGetchin ejecta</span>
+        </div>
+      </div>
+
+      <div class="gal-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <img class="gal-img" src="single_crater_erosion.png" alt="Single crater with erosion render">
+        <span class="corner-id">// I.002</span>
+        <div class="gal-caption">
+          Single Crater + Erosion
+          <span class="sub">// + Stream Power · Beyer hydraulics</span>
+        </div>
+      </div>
+
+      <div class="gal-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <img class="gal-img" src="multi_impact.png" alt="Multi-crater field render">
+        <span class="corner-id">// I.003</span>
+        <div class="gal-caption">
+          Multi-Crater Field
+          <span class="sub">// Sequential impacts · accumulated displacement</span>
+        </div>
+      </div>
+
+      <div class="gal-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <img class="gal-img" src="multi_impact_erosion.png" alt="Multi-crater field with erosion render">
+        <span class="corner-id">// I.004</span>
+        <div class="gal-caption">
+          Multi-Crater + Erosion
+          <span class="sub">// Full pipeline · weathered terrain</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========================== VIDEOS ========================== -->
+<section class="videos" id="videos">
+  <div class="wrap">
+    <div class="videos-head reveal">
+      <span class="label-tag">SECTION 02 // ANIMATED OUTPUT</span>
+      <h2 class="h2">Watch it <span class="accent">happen.</span></h2>
+    </div>
+
+    <div class="video-grid-2">
+
+      <div class="video-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <video class="vid-media" src="real_time_generation.mp4" autoplay muted loop playsinline preload="metadata"></video>
+        <span class="corner-tag">WORKFLOW</span>
+        <div class="vid-caption">
+          Real-Time Generation
+          <span class="sub">// One panel · 3D cursor · click to impact</span>
+        </div>
+      </div>
+
+      <div class="video-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <video class="vid-media" src="multi_impact.mp4" autoplay muted loop playsinline preload="metadata"></video>
+        <span class="corner-tag">SHAPE KEYS</span>
+        <div class="vid-caption">
+          Multi-Crater Animation
+          <span class="sub">// Sequential impacts via Blender shape keys</span>
+        </div>
+      </div>
+
+      <div class="video-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
+        <video class="vid-media" src="real_time_erosion.mp4" autoplay muted loop playsinline preload="metadata"></video>
+        <span class="corner-tag">EROSION</span>
+        <div class="vid-caption">
+          Real-Time Erosion
+          <span class="sub">// Hydraulic carving over geological time</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========================== EQUATIONS ========================== -->
+<section class="equations" id="equations">
+  <div class="wrap">
+    <div class="eq-head reveal">
+      <span class="label-tag">SECTION 03 // PHYSICS CORE</span>
+      <h2 class="h2">Six equations. <span class="accent">Real science.</span></h2>
+      <p class="eq-intro">
+        <strong>Crater Generator is not a displacement-texture preset.</strong> Every equation below runs in a compute shader, in production, for every crater you generate. References to Schmidt-Holsapple, McGetchin, O'Callaghan &amp; Mark, Beyer 2015 and Musgrave 1989.
+      </p>
+    </div>
+
+    <div class="eq-grid">
+
+      <div class="eq-card reveal">
+        <div class="eq-id">// EQ.01 · IMPACT</div>
+        <div class="eq-name">Schmidt-Holsapple Scaling</div>
+        <div class="eq-formula">D = K₁ · (g·a/v²)^μ · (ρₜ/ρₚ)^ν · 2a</div>
+        <p class="eq-desc">
+          Crater diameter from projectile radius, velocity and target/projectile density ratio. Calibrated against laboratory impact experiments and nuclear test data.
+          <span class="eq-cite">// Schmidt &amp; Holsapple · Pi-group scaling</span>
+        </p>
+      </div>
+
+      <div class="eq-card reveal">
+        <div class="eq-id">// EQ.02 · IMPACT</div>
+        <div class="eq-name">McGetchin Ejecta</div>
+        <div class="eq-formula">t(r) = peak · (r / rₚₑₐₖ)⁻³</div>
+        <p class="eq-desc">
+          Power-law decay of ejecta thickness with radial distance from the rim. Reproduces the natural fall-off observed on lunar and Martian craters.
+          <span class="eq-cite">// McGetchin et al. 1973</span>
+        </p>
+      </div>
+
+      <div class="eq-card reveal">
+        <div class="eq-id">// EQ.03 · IMPACT</div>
+        <div class="eq-name">Verlet Trajectory</div>
+        <div class="eq-formula">x(t+dt) = x + v·dt + ½·a·dt²</div>
+        <p class="eq-desc">
+          Symplectic integration of the meteor's atmospheric descent with quadratic drag — accurate trajectory for impact angle and contact-frame computation.
+          <span class="eq-cite">// Verlet 1967 · classical molecular dynamics</span>
+        </p>
+      </div>
+
+      <div class="eq-card reveal">
+        <div class="eq-id">// EQ.04 · EROSION</div>
+        <div class="eq-name">Stream Power Law</div>
+        <div class="eq-formula">∂z/∂t = −K · A^m · S^n</div>
+        <p class="eq-desc">
+          Erosion rate proportional to drainage area and slope. Drives the dendritic channel network through D8 flow accumulation across the heightfield.
+          <span class="eq-cite">// O'Callaghan &amp; Mark 1984</span>
+        </p>
+      </div>
+
+      <div class="eq-card reveal">
+        <div class="eq-id">// EQ.05 · EROSION</div>
+        <div class="eq-name">Beyer Particle Hydraulics</div>
+        <div class="eq-formula">v ← v · inertia − ∇h · (1 − inertia)</div>
+        <p class="eq-desc">
+          Each water droplet integrates momentum + gradient descent, carries sediment up to capacity, deposits where slope drops. Tens of thousands of particles per second on the GPU.
+          <span class="eq-cite">// Beyer 2015 · TU München thesis</span>
+        </p>
+      </div>
+
+      <div class="eq-card reveal">
+        <div class="eq-id">// EQ.06 · EROSION</div>
+        <div class="eq-name">Thermal Erosion (Talus)</div>
+        <div class="eq-formula">loss = rate · max(slope − talus, 0)</div>
+        <p class="eq-desc">
+          Material above the talus angle slumps to neighbours. Prevents unrealistic vertical walls and produces natural slope-stable terrain.
+          <span class="eq-cite">// Musgrave et al. 1989</span>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========================== CTA FINAL ========================== -->
+<section class="cta-final" id="cta">
+  <div class="wrap">
+    <div class="cta-pretitle reveal">// READY FOR DEPLOYMENT</div>
+    <h2 class="cta-h reveal">
+      Generate your<br>first <span class="accent">crater.</span>
+    </h2>
+    <p class="cta-sub reveal">A single Blender addon. Real physics. GPU speed. Procedural variation by design. Available now on Superhive Market.</p>
+  </div>
+</section>
+
+<!-- ========================== FOOTER ========================== -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-text">
+      // CRATER&nbsp;GENERATOR&nbsp;<span class="accent">v1.0.0</span>&nbsp;·&nbsp;ALTERNATIVE&nbsp;PACK&nbsp;·&nbsp;© 2026
+    </div>
+  </div>
+</footer>
+
+<script>
+  // CURSOR SPOTLIGHT
+  (function() {
+    const sp = document.getElementById('spotlight');
+    if (!sp) return;
+    let tx = window.innerWidth / 2, ty = window.innerHeight / 2;
+    let cx = tx, cy = ty;
+    let active = false;
+
+    window.addEventListener('mousemove', (e) => {
+      tx = e.clientX;
+      ty = e.clientY;
+      if (!active) {
+        active = true;
+        sp.classList.add('active');
+      }
+    });
+
+    window.addEventListener('mouseleave', () => {
+      active = false;
+      sp.classList.remove('active');
+    });
+
+    function tick() {
+      // smooth lerp follow
+      cx += (tx - cx) * 0.18;
+      cy += (ty - cy) * 0.18;
+      sp.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`;
+      requestAnimationFrame(tick);
+    }
+    tick();
+  })();
+
+  // STARFIELD
+  (function() {
+    const c = document.getElementById('stars');
+    const ctx = c.getContext('2d');
+    let stars = [];
+    let w, h;
+
+    function resize() {
+      w = c.width = window.innerWidth;
+      h = c.height = window.innerHeight;
+      stars = [];
+      const count = Math.floor(w * h / 4500);
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.2 + 0.2,
+          v: Math.random() * 0.04 + 0.01,
+          a: Math.random() * 0.7 + 0.1,
+          dir: Math.random() > 0.5 ? 1 : -1
+        });
+      }
+    }
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of stars) {
+        s.a += s.v * s.dir;
+        if (s.a > 0.95 || s.a < 0.1) s.dir *= -1;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        const isPlasma = s.r > 1.0;
+        ctx.fillStyle = isPlasma
+          ? `rgba(255, 94, 31, ${s.a * 0.9})`
+          : `rgba(255, 255, 255, ${s.a * 0.6})`;
+        if (isPlasma) {
+          ctx.shadowColor = 'rgba(255, 94, 31, 0.8)';
+          ctx.shadowBlur = 6;
+        } else { ctx.shadowBlur = 0; }
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      requestAnimationFrame(draw);
+    }
+    resize();
+    draw();
+    window.addEventListener('resize', resize);
+  })();
+
+  // SCROLL REVEAL
+  (function() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('in-view');
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  })();
+</script>
+
+</body>
+</html>
