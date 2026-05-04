@@ -38,7 +38,7 @@
     overflow-x: hidden;
   }
   ::selection { background: var(--plasma); color: var(--void); }
-
+ 
   #stars {
     position: fixed; inset: 0;
     z-index: 0;
@@ -66,7 +66,7 @@
         transparent 1px,
         transparent 3px);
   }
-
+ 
   /* ---- glitch RGB split on hover (applied to all text elements) ---- */
   .hero-title,
   .h2,
@@ -141,7 +141,7 @@
       transform: translate(0, 0);
     }
   }
-
+ 
   /* ---- cursor spotlight ---- */
   #spotlight {
     position: fixed;
@@ -163,7 +163,7 @@
   }
   #spotlight.active { opacity: 1; }
   @media (hover: none) { #spotlight { display: none; } }
-
+ 
   .wrap { max-width: 1280px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 2; }
   .label-tag {
     display: inline-flex; align-items: center; gap: 10px;
@@ -185,7 +185,7 @@
     max-width: 760px;
   }
   .h2 .accent { color: var(--plasma); }
-
+ 
   /* HUD corners */
   .hud { position: relative; }
   .hud::before, .hud::after,
@@ -199,7 +199,7 @@
   .hud::after  { top: -1px; right: -1px; border-left: none; border-bottom: none; }
   .hud > .hud-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
   .hud > .hud-br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
-
+ 
   /* ========================== NAV ========================== */
   .nav-bar {
     padding: 24px 0;
@@ -235,14 +235,13 @@
     font-size: 11px;
     letter-spacing: 0.15em;
   }
-
+ 
   /* ========================== HERO ========================== */
   .hero {
     position: relative;
-    padding: 80px 0 96px;
+    padding: 64px 0 80px;
     border-bottom: 1px solid var(--rule);
     overflow: hidden;
-    min-height: 78vh;
     display: flex;
     align-items: center;
   }
@@ -305,7 +304,7 @@
   .hero-title .ti-row:nth-child(2) .ti-inner { animation-delay: 0.25s; }
   .hero-title .accent { color: var(--plasma); }
   @keyframes rise-up { to { transform: translateY(0); } }
-
+ 
   .hero-line {
     height: 1px;
     background: linear-gradient(90deg, var(--plasma) 0%, transparent 100%);
@@ -314,7 +313,7 @@
     margin-bottom: 32px;
   }
   @keyframes line-grow { to { width: 100%; } }
-
+ 
   .hero-meta {
     max-width: 720px;
     opacity: 0;
@@ -330,10 +329,10 @@
     color: var(--ink-mid);
   }
   .hero-tagline strong { color: var(--ink); font-weight: 600; }
-
+ 
   /* ========================== KEY MESSAGE ========================== */
   .keymsg {
-    padding: 80px 0;
+    padding: 64px 0;
     border-bottom: 1px solid var(--rule);
     position: relative;
   }
@@ -386,10 +385,10 @@
     .keymsg-grid { grid-template-columns: 1fr; }
     .keymsg-cell { padding: 32px 24px; }
   }
-
+ 
   /* ========================== GALLERY (4 images) ========================== */
   .gallery {
-    padding: 96px 0;
+    padding: 72px 0;
     border-bottom: 1px solid var(--rule);
     position: relative;
   }
@@ -478,10 +477,10 @@
   @media (max-width: 760px) {
     .gal-card { aspect-ratio: 16 / 10; }
   }
-
+ 
   /* ========================== VIDEOS (2 stacked) ========================== */
   .videos {
-    padding: 96px 0;
+    padding: 72px 0;
     border-bottom: 1px solid var(--rule);
     position: relative;
   }
@@ -582,10 +581,10 @@
   @media (max-width: 760px) {
     .video-card { aspect-ratio: 16 / 9; }
   }
-
+ 
   /* ========================== EQUATIONS ========================== */
   .equations {
-    padding: 96px 0;
+    padding: 72px 0;
     border-bottom: 1px solid var(--rule);
     position: relative;
   }
@@ -656,10 +655,10 @@
   @media (max-width: 760px) {
     .eq-formula { font-size: 14px; }
   }
-
+ 
   /* ========================== CTA ========================== */
   .cta-final {
-    padding: 120px 0;
+    padding: 96px 0;
     text-align: center;
     position: relative;
     border-bottom: 1px solid var(--rule);
@@ -697,7 +696,7 @@
     margin: 0 auto 48px;
     line-height: 1.6;
   }
-
+ 
   /* ========================== FOOTER ========================== */
   .footer {
     padding: 40px 0;
@@ -711,7 +710,7 @@
     color: var(--ink-dim);
   }
   .footer-text .accent { color: var(--plasma); }
-
+ 
   /* ========================== SCROLL REVEAL ========================== */
   .reveal {
     opacity: 0;
@@ -726,10 +725,10 @@
 </style>
 </head>
 <body>
-
+ 
 <canvas id="stars"></canvas>
 <div id="spotlight"></div>
-
+ 
 <!-- ========================== NAV ========================== -->
 <nav class="nav-bar">
   <div class="wrap nav-inner">
@@ -740,7 +739,7 @@
     </div>
   </div>
 </nav>
-
+ 
 <!-- ========================== HERO ========================== -->
 <section class="hero">
   <div class="hero-grid"></div>
@@ -749,23 +748,23 @@
       <span class="status-dot"></span>
       <span>REAL-TIME &nbsp;·&nbsp; PHYSICS-BASED &nbsp;·&nbsp; PROCEDURAL CRATER GENERATION</span>
     </div>
-
+ 
     <h1 class="hero-title">
       <span class="ti-row"><span class="ti-inner">Crater</span></span>
       <span class="ti-row"><span class="ti-inner"><span class="accent">Generator.</span></span></span>
     </h1>
-
+ 
     <div class="hero-line"></div>
-
+ 
     <div class="hero-meta">
       <p class="hero-tagline">
         <strong>GPU-accelerated procedural craters for Blender.</strong> Physically realistic for both <strong>kinetic impact</strong> and <strong>explosion</strong> craters. Real hydraulic erosion. Every crater unique — driven by Schmidt-Holsapple scaling, McGetchin ejecta and Beyer particle hydraulics, all computed on the GPU.
       </p>
     </div>
-
+ 
   </div>
 </section>
-
+ 
 <!-- ========================== KEY MESSAGE ========================== -->
 <section class="keymsg">
   <div class="wrap">
@@ -797,7 +796,7 @@
     </div>
   </div>
 </section>
-
+ 
 <!-- ========================== GALLERY (4 images) ========================== -->
 <section class="gallery" id="gallery">
   <div class="wrap">
@@ -805,9 +804,9 @@
       <span class="label-tag">SECTION 01 // VISUAL OUTPUT</span>
       <h2 class="h2">Four states. <span class="accent">Same solver.</span></h2>
     </div>
-
+ 
     <div class="gal-grid-4">
-
+ 
       <div class="gal-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
         <img class="gal-img" src="single_crater.png" alt="Single crater render">
         <span class="corner-id">// I.001</span>
@@ -816,7 +815,7 @@
           <span class="sub">// Schmidt-Holsapple · McGetchin ejecta</span>
         </div>
       </div>
-
+ 
       <div class="gal-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
         <img class="gal-img" src="single_crater_erosion.png" alt="Single crater with erosion render">
         <span class="corner-id">// I.002</span>
@@ -825,7 +824,7 @@
           <span class="sub">// + Stream Power · Beyer hydraulics</span>
         </div>
       </div>
-
+ 
       <div class="gal-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
         <img class="gal-img" src="multi_impact.png" alt="Multi-crater field render">
         <span class="corner-id">// I.003</span>
@@ -834,7 +833,7 @@
           <span class="sub">// Sequential impacts · accumulated displacement</span>
         </div>
       </div>
-
+ 
       <div class="gal-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
         <img class="gal-img" src="multi_impact_erosion.png" alt="Multi-crater field with erosion render">
         <span class="corner-id">// I.004</span>
@@ -843,11 +842,11 @@
           <span class="sub">// Full pipeline · weathered terrain</span>
         </div>
       </div>
-
+ 
     </div>
   </div>
 </section>
-
+ 
 <!-- ========================== VIDEOS ========================== -->
 <section class="videos" id="videos">
   <div class="wrap">
@@ -855,9 +854,9 @@
       <span class="label-tag">SECTION 02 // ANIMATED OUTPUT</span>
       <h2 class="h2">Watch it <span class="accent">happen.</span></h2>
     </div>
-
+ 
     <div class="video-grid-2">
-
+ 
       <div class="video-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
         <video class="vid-media" src="real_time_generation.mp4" autoplay muted loop playsinline preload="metadata"></video>
         <span class="corner-tag">WORKFLOW</span>
@@ -866,7 +865,7 @@
           <span class="sub">// One panel · 3D cursor · click to impact</span>
         </div>
       </div>
-
+ 
       <div class="video-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
         <video class="vid-media" src="multi_impact.mp4" autoplay muted loop playsinline preload="metadata"></video>
         <span class="corner-tag">SHAPE KEYS</span>
@@ -875,7 +874,7 @@
           <span class="sub">// Sequential impacts via Blender shape keys</span>
         </div>
       </div>
-
+ 
       <div class="video-card reveal hud"><span class="hud-bl"></span><span class="hud-br"></span>
         <video class="vid-media" src="real_time_erosion.mp4" autoplay muted loop playsinline preload="metadata"></video>
         <span class="corner-tag">EROSION</span>
@@ -884,11 +883,11 @@
           <span class="sub">// Hydraulic carving over geological time</span>
         </div>
       </div>
-
+ 
     </div>
   </div>
 </section>
-
+ 
 <!-- ========================== EQUATIONS ========================== -->
 <section class="equations" id="equations">
   <div class="wrap">
@@ -899,9 +898,9 @@
         <strong>Crater Generator is not a displacement-texture preset.</strong> Every equation below runs in a compute shader, in production, for every crater you generate. References to Schmidt-Holsapple, McGetchin, O'Callaghan &amp; Mark, Beyer 2015 and Musgrave 1989.
       </p>
     </div>
-
+ 
     <div class="eq-grid">
-
+ 
       <div class="eq-card reveal">
         <div class="eq-id">// EQ.01 · IMPACT</div>
         <div class="eq-name">Schmidt-Holsapple Scaling</div>
@@ -911,7 +910,7 @@
           <span class="eq-cite">// Schmidt &amp; Holsapple · Pi-group scaling</span>
         </p>
       </div>
-
+ 
       <div class="eq-card reveal">
         <div class="eq-id">// EQ.02 · IMPACT</div>
         <div class="eq-name">McGetchin Ejecta</div>
@@ -921,7 +920,7 @@
           <span class="eq-cite">// McGetchin et al. 1973</span>
         </p>
       </div>
-
+ 
       <div class="eq-card reveal">
         <div class="eq-id">// EQ.03 · IMPACT</div>
         <div class="eq-name">Verlet Trajectory</div>
@@ -931,7 +930,7 @@
           <span class="eq-cite">// Verlet 1967 · classical molecular dynamics</span>
         </p>
       </div>
-
+ 
       <div class="eq-card reveal">
         <div class="eq-id">// EQ.04 · EROSION</div>
         <div class="eq-name">Stream Power Law</div>
@@ -941,7 +940,7 @@
           <span class="eq-cite">// O'Callaghan &amp; Mark 1984</span>
         </p>
       </div>
-
+ 
       <div class="eq-card reveal">
         <div class="eq-id">// EQ.05 · EROSION</div>
         <div class="eq-name">Beyer Particle Hydraulics</div>
@@ -951,7 +950,7 @@
           <span class="eq-cite">// Beyer 2015 · TU München thesis</span>
         </p>
       </div>
-
+ 
       <div class="eq-card reveal">
         <div class="eq-id">// EQ.06 · EROSION</div>
         <div class="eq-name">Thermal Erosion (Talus)</div>
@@ -961,11 +960,11 @@
           <span class="eq-cite">// Musgrave et al. 1989</span>
         </p>
       </div>
-
+ 
     </div>
   </div>
 </section>
-
+ 
 <!-- ========================== CTA FINAL ========================== -->
 <section class="cta-final" id="cta">
   <div class="wrap">
@@ -976,7 +975,7 @@
     <p class="cta-sub reveal">A single Blender addon. Real physics. GPU speed. Procedural variation by design. Available now on Superhive Market.</p>
   </div>
 </section>
-
+ 
 <!-- ========================== FOOTER ========================== -->
 <footer class="footer">
   <div class="wrap">
@@ -985,7 +984,7 @@
     </div>
   </div>
 </footer>
-
+ 
 <script>
   // CURSOR SPOTLIGHT
   (function() {
@@ -994,7 +993,7 @@
     let tx = window.innerWidth / 2, ty = window.innerHeight / 2;
     let cx = tx, cy = ty;
     let active = false;
-
+ 
     window.addEventListener('mousemove', (e) => {
       tx = e.clientX;
       ty = e.clientY;
@@ -1003,12 +1002,12 @@
         sp.classList.add('active');
       }
     });
-
+ 
     window.addEventListener('mouseleave', () => {
       active = false;
       sp.classList.remove('active');
     });
-
+ 
     function tick() {
       // smooth lerp follow
       cx += (tx - cx) * 0.18;
@@ -1018,14 +1017,14 @@
     }
     tick();
   })();
-
+ 
   // STARFIELD
   (function() {
     const c = document.getElementById('stars');
     const ctx = c.getContext('2d');
     let stars = [];
     let w, h;
-
+ 
     function resize() {
       w = c.width = window.innerWidth;
       h = c.height = window.innerHeight;
@@ -1066,7 +1065,7 @@
     draw();
     window.addEventListener('resize', resize);
   })();
-
+ 
   // SCROLL REVEAL
   (function() {
     const observer = new IntersectionObserver((entries) => {
@@ -1077,6 +1076,6 @@
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   })();
 </script>
-
+ 
 </body>
 </html>
